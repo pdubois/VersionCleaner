@@ -1,0 +1,47 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+
+<beans>
+   <bean id="VersionStoreCleanerParralel" class="org.alfresco.repo.version.cleanup.VersionCleanerParralel" >
+      <property name="descriptorService" >
+         <ref bean="DescriptorService" />
+      </property>
+      <property name="versionService" >
+         <ref bean="VersionService" />
+      </property>
+      <property name="searchService" >
+         <ref bean="searchService" />
+      </property>
+      <property name="nodeService" >
+         <ref bean="nodeService" />
+      </property>
+      <property name="searchLimiter" >
+         <!--  value> +PATH:"/app:company_home//*"</value -->
+         <value> </value>
+      </property>
+      <property name="maxVersionsToKeep" >
+         <value>5</value>
+      </property>
+    <property name="minVersionsToKeep" >
+         <value>2</value>
+      </property>
+    <property name="maxDaysToKeep" >
+         <value>10</value>
+      </property>
+      <property name="jobLockService">
+         <ref bean="jobLockService" />
+      </property>
+      <property name="threadNumber">
+         <value>2</value>
+      </property>
+      <!-- property name="transactionSize">
+         <value>100</value>
+      </property -->
+      <property name="bigPageLen">
+         <value>50000</value>
+      </property>
+      <property name="transactionService" >
+        <ref bean="transactionService" />
+      </property>
+   </bean>
+</beans>
