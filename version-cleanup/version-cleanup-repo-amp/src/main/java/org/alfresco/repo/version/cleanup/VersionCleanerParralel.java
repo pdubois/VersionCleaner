@@ -76,8 +76,8 @@ public class VersionCleanerParralel implements ApplicationEventPublisherAware
     /** kept to notify the thread that it should quit */
     private static VmShutdownListener vmShutdownListener = new VmShutdownListener("VersionStoreCleaner");
 
-    private static final Comparator VERSION_DATE_COMPARATOR = new VersionDateComparator();
-    private static final Comparator VERSION_DATE_COMPARATOR_REVERSE = new VersionDateComparatorReverse();
+    private static final Comparator<Version> VERSION_DATE_COMPARATOR = new VersionDateComparator();
+    private static final Comparator<Version> VERSION_DATE_COMPARATOR_REVERSE = new VersionDateComparatorReverse();
     //private static final String VERSION_SEARCH_STRING = "+ASPECT:\"{http://www.alfresco.org/model/content/1.0}versionable\"" +
     //                                                     "  -ASPECT:\"{http://www.alfresco.org/model/content/1.0}workingcopy\"";
     private static final String VERSION_SEARCH_STRING = "ASPECT:\"{http://www.alfresco.org/model/content/1.0}versionable\"";

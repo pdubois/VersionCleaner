@@ -10,13 +10,13 @@ import org.alfresco.service.cmr.version.Version;
  *
  * @author Philippe Dubois
  */
-public class VersionDateComparator implements Comparator
+public class VersionDateComparator implements Comparator<Version>
 {
 
-    public int compare(Object version1, Object version2)
+    public int compare(Version version1, Version version2)
     {
-        Date date1 = ((Version) version1).getFrozenModifiedDate();
-        Date date2 = ((Version) version2).getFrozenModifiedDate();
+        Date date1 = version1.getFrozenModifiedDate();
+        Date date2 = version2.getFrozenModifiedDate();
 
         // sort the list ascending
         return date2.compareTo(date1);
