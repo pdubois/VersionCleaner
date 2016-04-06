@@ -74,8 +74,6 @@ public class DemoComponentTest {
     private static final int VERSION_NUMBER_INCREASE = 4;
     private static final int NUMBER_INITIAL_OF_VERSIONS = 4;
 
-    //indicate if this test initialized or not
-    private boolean initialized = false;
     
     @Autowired
     protected DemoComponent demoComponent;
@@ -120,11 +118,7 @@ public class DemoComponentTest {
     }
     
     @Before
-    public  void before() {
-        
-        System.out.println("****************************** THIS IS EXECUTED BEFORE *******************************************");
-        if(!initialized)
-        {
+    public  void before() {    
             AuthenticationUtil.setFullyAuthenticatedUser(ADMIN_USER_NAME);
             NodeRef companyHome = demoComponent.getCompanyHome();
             // create a test folder for this run
@@ -133,7 +127,6 @@ public class DemoComponentTest {
             
             // create children and populate with versioned nodes
             createAndPopulate(testFolderNodeRef);
-        }
     }
     
     private void createAndPopulate(NodeRef testFolderNodeRef)
