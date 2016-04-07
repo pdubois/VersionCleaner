@@ -59,8 +59,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.ApplicationEventPublisherAware;
 
 /**
- * This component is responsible for finding old versions and deleting them. Deletion handlers can be provided to ensure
- * that the version is moved to another location prior to being deleted
+ * This component is responsible for finding old versions and deleting them. 
  * 
  * @author Derek Hulley
  * @author Philippe Dubois
@@ -418,11 +417,6 @@ public class VersionCleanerParralel implements ApplicationEventPublisherAware
                 }
                 Collection<NodeRef> nodesToCleaned = transactionService.getRetryingTransactionHelper().doInTransaction(
                         executeCallback, true);
-                // nbrTotOfDeletedVersions += deleteVersions(nodesToCleaned);
-                // clean the versions in parralell
-                //final BatchProcessor<NodeRef> groupProcessor = new BatchProcessor<NodeRef>(logger,
-                //        this.transactionService.getRetryingTransactionHelper(), this.ruleService,
-                //        this.applicationEventPublisher, nodesToCleaned, "VersionCleaner", 5000, threadNumber, transactionSize);
                 final BatchProcessor<NodeRef> groupProcessor = new BatchProcessor<NodeRef>("VersionCleaner", this.transactionService.getRetryingTransactionHelper(), nodesToCleaned, threadNumber,
                         5000,this.applicationEventPublisher, logger, 500);
                 final Date deleteOlder = new Date(System.currentTimeMillis() - (long) maxDaysToKeep * 3600L * 1000L
