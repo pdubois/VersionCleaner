@@ -16,6 +16,8 @@ import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.ServiceRegistry;
 import org.alfresco.service.cmr.coci.CheckOutCheckInService;
+import org.alfresco.service.cmr.lock.LockService;
+import org.alfresco.service.cmr.lock.LockType;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentService;
@@ -106,6 +108,10 @@ public class DemoComponentTest {
     @Autowired
     @Qualifier("VersionStoreCleanerParralel")
     protected VersionCleanerParralel versionCleanerParralel;
+    
+    @Autowired
+    @Qualifier("LockService")
+    protected LockService lockService;    
     
     protected String testFolderName;
     protected NodeRef testFolderNodeRef;
@@ -363,6 +369,90 @@ public class DemoComponentTest {
             // System.out.println("Num of versions =" + numberOfVersions);
             assertEquals((versionCleanerParralel.getMinVersionsToKeep()) == numberOfVersions, true);
         }        
+        
+        
+     }
+    
+    @Test
+    public void testCheckLockMinVersions() throws Exception
+    {
+        
+        
+        // increase the number of versions above the limit specified by maxVersionsToKeep 
+        for(int i = NUMBER_INITIAL_OF_VERSIONS; i < versionCleanerParralel.getMaxVersionsToKeep() + VERSION_NUMBER_INCREASE - 1 ; i ++ )
+        {
+            createNextGeneration(listOfNodeRef);
+        }
+        
+        //Lock all the nodes
+        for(int i=0; i< listOfNodeRef.size(); i++)
+        {
+            lockService.lock(listOfNodeRef.get(i), LockType.NODE_LOCK);
+        }
+        
+        
+        versionCleanerParralel.setMaxDaysToKeep(-20);
+        
+        //apply the cleaning process
+        //try to clean the repo
+        long startTime = System.currentTimeMillis();
+        versionCleanerParralel.execute();
+        long endTime = System.currentTimeMillis();
+        System.out.println("Cleaning took:" + (endTime - startTime));
+        System.out.println("------------------------------------------");
+        VersionHistory history = versionService.getVersionHistory(listOfNodeRef.get(0));
+        List<Version> versions = new ArrayList<Version>(history.getAllVersions());
+        for (int index = 0; index < versions.size(); index++)
+            System.out.println("Version label=" + (versions.get(index)).getVersionLabel());
+        for (int i = 0; i < listOfNodeRef.size(); i++)
+        {
+            int numberOfVersions = versionService.getVersionHistory(listOfNodeRef.get(i)).getAllVersions().size();
+            // System.out.println("Num of versions =" + numberOfVersions);
+            assertEquals((versionCleanerParralel.getMinVersionsToKeep()) == numberOfVersions, true);
+        }
+        
+        
+        
+     }
+    
+    @Test
+    public void testCheckLockMaxVersions() throws Exception
+    {
+        
+        
+        // increase the number of versions above the limit specified by maxVersionsToKeep 
+        for(int i = NUMBER_INITIAL_OF_VERSIONS; i < versionCleanerParralel.getMaxVersionsToKeep() + VERSION_NUMBER_INCREASE - 1 ; i ++ )
+        {
+            createNextGeneration(listOfNodeRef);
+        }
+        
+        //Lock all the nodes
+        for(int i=0; i< listOfNodeRef.size(); i++)
+        {
+            lockService.lock(listOfNodeRef.get(i), LockType.NODE_LOCK);
+        }
+        
+        
+        versionCleanerParralel.setMaxDaysToKeep(100);
+        
+        //apply the cleaning process
+        //try to clean the repo
+        long startTime = System.currentTimeMillis();
+        versionCleanerParralel.execute();
+        long endTime = System.currentTimeMillis();
+        System.out.println("Cleaning took:" + (endTime - startTime));
+        System.out.println("------------------------------------------");
+        VersionHistory history = versionService.getVersionHistory(listOfNodeRef.get(0));
+        List<Version> versions = new ArrayList<Version>(history.getAllVersions());
+        for (int index = 0; index < versions.size(); index++)
+            System.out.println("Version label=" + (versions.get(index)).getVersionLabel());
+        for (int i = 0; i < listOfNodeRef.size(); i++)
+        {
+            int numberOfVersions = versionService.getVersionHistory(listOfNodeRef.get(i)).getAllVersions().size();
+            // System.out.println("Num of versions =" + numberOfVersions);
+            assertEquals(versionCleanerParralel.getMaxVersionsToKeep() == numberOfVersions, true);
+        }
+        
         
         
      }
