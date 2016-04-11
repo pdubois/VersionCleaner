@@ -15,6 +15,7 @@ import org.alfresco.repo.content.MimetypeMap;
 import org.alfresco.repo.security.authentication.AuthenticationUtil;
 import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
 import org.alfresco.service.ServiceRegistry;
+import org.alfresco.service.cmr.coci.CheckOutCheckInService;
 import org.alfresco.service.cmr.model.FileFolderService;
 import org.alfresco.service.cmr.model.FileInfo;
 import org.alfresco.service.cmr.repository.ContentService;
@@ -97,6 +98,10 @@ public class DemoComponentTest {
     @Autowired
     @Qualifier("VersionService")
     protected VersionService versionService;
+    
+    @Autowired
+    @Qualifier("CheckOutCheckInService")
+    protected CheckOutCheckInService checkOutCheckInService;
     
     @Autowired
     @Qualifier("VersionStoreCleanerParralel")
@@ -246,13 +251,14 @@ public class DemoComponentTest {
        
        //apply the cleaning process
        //try to clean the repo
+       versionCleanerParralel.setMaxDaysToKeep(100);
        versionCleanerParralel.execute();
        
        // check that we are back to the MAX
        for (int i = 0; i < listOfNodeRef.size(); i++)
        {
            int numberOfVersions = versionService.getVersionHistory(listOfNodeRef.get(i)).getAllVersions().size();
-           // System.out.println("Num of versions =" + numberOfVersions);
+           System.out.println("***** Num of versions =" + numberOfVersions + "<---->" + versionCleanerParralel.getMaxVersionsToKeep());
            assertEquals(versionCleanerParralel.getMaxVersionsToKeep() == numberOfVersions, true);
        }
        
@@ -295,16 +301,70 @@ public class DemoComponentTest {
 
      }
     
-    
-    
-//    @Test
-//    public void testChildNodesCount() {
-//    	AuthenticationUtil.setFullyAuthenticatedUser(ADMIN_USER_NAME);
-//        NodeRef companyHome = demoComponent.getCompanyHome();
-//        int childNodeCount = demoComponent.childNodesCount(companyHome);
-//        assertNotNull(childNodeCount);
-//        // There are 7 folders by default under Company Home
-//        assertEquals(7, childNodeCount);
-//    }
-
-}
+    @Test
+    public void testCheckOut() throws Exception
+    {
+        
+        
+        // increase the number of versions above the limit specified by maxVersionsToKeep 
+        for(int i = NUMBER_INITIAL_OF_VERSIONS; i < versionCleanerParralel.getMaxVersionsToKeep() + VERSION_NUMBER_INCREASE - 1 ; i ++ )
+        {
+            createNextGeneration(listOfNodeRef);
+        }
+        
+        ArrayList<NodeRef> listOfCheckedOutNodes = new ArrayList<NodeRef>(NUMBER_OF_TESTING_NODES);
+        //check out all the nodes
+        for(int i=0; i< listOfNodeRef.size(); i++)
+        {
+            NodeRef checkedOutNode = checkOutCheckInService.checkout(listOfNodeRef.get(i));
+            listOfCheckedOutNodes.add(checkedOutNode);
+        }
+        
+        
+        versionCleanerParralel.setMaxDaysToKeep(-20);
+        
+        //apply the cleaning process
+        //try to clean the repo
+        long startTime = System.currentTimeMillis();
+        versionCleanerParralel.execute();
+        long endTime = System.currentTimeMillis();
+        System.out.println("Cleaning took:" + (endTime - startTime));
+        System.out.println("------------------------------------------");
+        VersionHistory history = versionService.getVersionHistory(listOfNodeRef.get(0));
+        List<Version> versions = new ArrayList<Version>(history.getAllVersions());
+        for (int index = 0; index < versions.size(); index++)
+            System.out.println("Version label=" + (versions.get(index)).getVersionLabel());
+        for (int i = 0; i < listOfNodeRef.size(); i++)
+        {
+            int numberOfVersions = versionService.getVersionHistory(listOfNodeRef.get(i)).getAllVersions().size();
+            // System.out.println("Num of versions =" + numberOfVersions);
+            assertEquals((versionCleanerParralel.getMinVersionsToKeep()) == numberOfVersions, true);
+        }
+        
+        //check  in
+        for(int i=0; i< listOfCheckedOutNodes.size(); i++)
+        {
+            HashMap<String, Serializable> props = new HashMap<String, Serializable>();
+            //props.put(ContentModel.PROP_TITLE, "This is a new title");
+            NodeRef checkedOutNode = checkOutCheckInService.checkin(listOfCheckedOutNodes.get(i), props);
+        }
+        for (int i = 0; i < listOfNodeRef.size(); i++)
+        {
+            int numberOfVersions = versionService.getVersionHistory(listOfNodeRef.get(i)).getAllVersions().size();
+            // System.out.println("Num of versions =" + numberOfVersions);
+            assertEquals((versionCleanerParralel.getMinVersionsToKeep()) == numberOfVersions, false);
+        }                
+        
+        
+        versionCleanerParralel.execute();
+        for (int i = 0; i < listOfNodeRef.size(); i++)
+        {
+            int numberOfVersions = versionService.getVersionHistory(listOfNodeRef.get(i)).getAllVersions().size();
+            // System.out.println("Num of versions =" + numberOfVersions);
+            assertEquals((versionCleanerParralel.getMinVersionsToKeep()) == numberOfVersions, true);
+        }        
+        
+        
+     }
+     
+    }
